@@ -19,35 +19,48 @@ if signature != b'HMMSYS PackFile\n':
     print("Invalid Pak signature")
     exit()
 
-# Unknown header part
+# Constant header part
 unknown = f.read(16)
 
 # Read number of stored files
 filesN = int.from_bytes(f.read(4), byteorder='little')
 
-# Unknown value
+# Header length?
 unknown2 = int.from_bytes(f.read(4), byteorder='little')
 
 # Read the files
 files = []
+buffer = []
+
 for i in range(filesN):
 
-    # Get file name size TODO: this needs to be understood better!
-    a = int.from_bytes(f.read(1), byteorder='little')
-    b = int.from_bytes(f.read(1), byteorder='little')
-    pathLenght = a-b
+    # Read path slice indices
+    highIndex = int.from_bytes(f.read(1), byteorder='little')
+    lowIndex = int.from_bytes(f.read(1), byteorder='little')
+    pathLength = highIndex - lowIndex
 
-    path = f.read(pathLenght)
+    # Ensure buffer is large enough
+    if len(buffer) < highIndex:
+        buffer.extend([''] * (highIndex - len(buffer)))
 
-    # Read the position of the file
+    # Read the new part of the path and decode it
+    pathPart = f.read(pathLength)
+    decodedPart = pathPart.decode('utf-8')
+
+    # Update only the slice in the buffer
+    buffer[lowIndex:highIndex] = list(decodedPart)
+
+    # Join only up to high_index to form the path
+    path = ''.join(buffer[:highIndex])
+    print(f"File name: {path}")
+
+    # Read metadata
     fileLocation = int.from_bytes(f.read(4), byteorder='little')
-
-    # Read the size of the file
     fileSize = int.from_bytes(f.read(4), byteorder='little')
 
     # Create a dict and add it to files
     el = {
-        "path" : path.decode('utf-8'),
+        "path" : path,
         "location" : fileLocation,
         "size" : fileSize
     }

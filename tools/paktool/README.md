@@ -4,7 +4,9 @@
 
 **Pak Tools** is a set of utilities for managing and manipulating `.pak` files used in the **Imperivm GBR** game. These `.pak` files function as archives that can store any type of file.
 
-## File Structure
+The file is structured with an header, followed by a table of contents and the actual files. The table of contents contains information about each file, including its path, size, and offset within the archive.
+
+## Header
 
 * The first **16 bytes** represent the file magic:
 
@@ -21,16 +23,53 @@
 * Then:
 
   * **4 bytes**: Number of files (little-endian).
-  * **4 bytes**: Unknown value (purpose still under investigation).
+  * **4 bytes**: Header length.
 
-* For each file entry:
+## File Path Decoding
 
-  * **2 bytes**: The difference between these two represents the length of the path. The meaning of the single bytes is still unknown.
-  * **N bytes**: File path (ASCII).
-  * **4 bytes**: Offset of the file within the archive.
-  * **4 bytes**: File size.
+File paths are decoded using a shared buffer that is reused across multiple entries. This allows efficient storage by only writing the parts of the path that change between files.
 
-* This header is followed by the file contents, as referenced in the file table.
+Each file entry specifies a slice of the buffer to overwrite:
+
+1. Two bytes are read:  
+   - **Low index**: Start position in the buffer  
+   - **High index**: End position in the buffer
+
+2. The next `(high - low)` bytes are read and inserted into the buffer at the given range.
+
+3. The file path is then reconstructed by reading the buffer from the beginning up to the **high index**.
+
+#### Example
+
+- **File 1**
+  - Indexes: `0 → 19`  
+  - Data: `testfolder/test.txt`  
+  - Resulting path: `testfolder/test.txt`
+
+- **File 2**
+  - Indexes: `19 → 11`  
+  - Data: `ciao.txt`  
+  - Buffer becomes: `testfolder/ciao.txt`  
+  - Resulting path: `testfolder/ciao.txt`
+
+> **Note:** Only the filename changes, while the folder prefix (`testfolder/`) is preserved from the previous buffer state.
+
+---
+
+### File Entry Format
+
+Each file entry in the archive contains:
+
+| Bytes   | Description                           |
+|---------|---------------------------------------|
+| 1 byte  | **High index** (end of insert range)  |
+| 1 byte  | **Low index** (start of insert range) |
+| N bytes | **File path segment** (ASCII)         |
+| 4 bytes | **File offset** within the archive    |
+| 4 bytes | **File size** in bytes                |
+
+
+* This is then followed by the file contents, as referenced in the file table.
 
 
 ## Extraction
