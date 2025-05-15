@@ -104,7 +104,7 @@ python3 extractPak.py "game_path/Packs/UI.pak" "assets/Packs/UI"
 
 Repacking `.pak` files can be attempted using the same script, but be aware:
 
-> Note: Since parts of the file format (especially unknown header bytes) are not fully understood, repacked files may not function correctly in the game.
+> Note: Although the packed files can be correctly unpacked, the game crashes when loading them, hinting at a potential issue with the packing process.
 
 To pack a folder into a `.pak` file:
 
