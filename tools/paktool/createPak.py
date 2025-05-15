@@ -109,6 +109,11 @@ for entry in header:
     # Increment the file position
     filePosition += fileSize
 
+# Add 4 bytes per file to the header (unknown purpose)
+for entry in header:
+    # Write the file size
+    buffer.write(intToBytes(0, 4))
+
 # Create the full output path if it doesn't exist
 os.makedirs(os.path.abspath(os.path.dirname(outputPath)), exist_ok=True)
 

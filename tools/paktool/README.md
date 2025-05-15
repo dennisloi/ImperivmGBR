@@ -104,7 +104,7 @@ python3 extractPak.py "game_path/Packs/UI.pak" "assets/Packs/UI"
 
 Repacking `.pak` files can be attempted using the same script, but be aware:
 
-> Note: Although the packed files can be correctly unpacked, the game crashes when loading them, hinting at a potential issue with the packing process.
+> Note: Although the packed files can be correctly unpacked, the game crashes when loading them, hinting at a potential issue with the packing process. It's 100% related to the unknown bytes after the TOC. Anyway, this is low priority as the game loads the unpacked files as well if they are put in the correct folder
 
 To pack a folder into a `.pak` file:
 
